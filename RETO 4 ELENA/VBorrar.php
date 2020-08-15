@@ -1,0 +1,170 @@
+﻿<?php
+
+include("funciones.php");
+
+session_start();
+
+echo "<!DOCTYPE html>
+<html>
+<head>
+<title>BORRAR</title>
+<meta charset='utf-8'>
+</head>";
+
+if (isset($_SESSION['usuario']) && isset($_SESSION['clave']))
+{
+	if (($_SESSION['usuario'] != 'invitado') && ($_SESSION['clave'] != 'invitado'))
+	{
+		$usuario = $_SESSION['usuario'];
+
+		echo "<p style='float:right; margin:0px;'>Usuario conectado: ".$usuario."</p>";
+
+		if (isset($_GET['borrar']))
+		{
+			$conectar = conectar();
+//seleccionar datos tabla
+			$query = "SELECT * FROM  etxebizitzak ORDER BY data DESC";
+
+//ejecutar el select
+			$ejecutar = mysqli_query($conectar, $query);
+
+//verificar que se han insertado los valores
+			if (!$ejecutar) 
+			{
+				echo "Ocurrió un error";
+			}
+
+			else 
+			{
+	//pasar resultados como array
+
+				$casas = mysqli_fetch_array($ejecutar) ;
+			}
+
+			echo "<h1>BORRAR VIVIENDAS</h1>";
+			echo "<table style= 'border: 2px solid black; text-align: center'>";
+			echo "<form action='VBorrar.php?borrar' method='post'";
+			echo "<tr style= 'border: 2px solid black'>";
+			echo "<th style= 'border: 2px solid black'>Titulo</th>";
+			echo "<th style= 'border: 2px solid black'>Texto</th>";
+			echo "<th style= 'border: 2px solid black'>Categoria</th>";
+			echo "<th style= 'border: 2px solid black'>Fecha</th>";
+			echo "<th style= 'border: 2px solid black'>Imagen</th>";
+			echo "<th style= 'border: 2px solid black; padding-left: 15px; padding-right: 15px;'>m2</th>";
+			echo "<th style= 'border: 2px solid black; padding-left: 15px; padding-right: 15px;'>Precio</th>";
+			echo "<th style= 'border: 2px solid black'>Eliminar</th>";
+			echo "</tr>";
+
+			$contar_img = 1;
+
+			for ($i=0; $i < $casas; $i++) 
+			{ 
+
+				echo "<tr style= 'border: 2px solid black'>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo $casas['titulua'];
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo $casas['deskribapena'];
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo $casas['kategoria'];
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo $casas['data'];
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+
+				if ($casas['argazkia'] !== '')
+				{
+
+					$img_casa = "img/".$casas['argazkia'].".jpg";
+
+					if (!file_exists($img_casa))
+					{
+						echo "La imagen no esta disponible";
+					}
+
+					else
+					{
+						echo "<a href='img/".$casas['argazkia'].".jpg'><img src='img/ico-fichero.gif'></a>";
+					}
+				}
+
+				else
+				{
+					echo "";
+				}
+
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo $casas['m2'];
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo precio($casas['kategoria'],$casas['m2']);
+				echo "</td>";
+				echo "<td style= 'border: 2px solid black'>";
+				echo "<input type='checkbox' name='borrar_check[]' value='".$casas['id']."'></input>";
+				echo "</td>";
+				echo "</tr>";
+
+				$casas = mysqli_fetch_array($ejecutar);
+			}
+
+			echo "</table>";
+			echo "<br> <input type='submit' name='borrarViv' value='BORRAR VIVIENDAS'</input><br>";
+			echo "</form>";
+			echo "<br> <a href='VPrincipal.php'>Volver al menu principal</a>";
+			echo "</form>";
+
+
+			if (isset($_POST['borrarViv']))
+			{
+				if (isset($_POST['borrar_check']))
+				{
+					$borrarV = $_POST['borrar_check'];
+
+					foreach ($borrarV as $id) 
+					{
+						$borrar = "DELETE FROM etxebizitzak WHERE id=?";
+
+						$stmt = mysqli_prepare($conectar, $borrar);
+
+						mysqli_stmt_bind_param($stmt, 's', $id);
+
+						$query2 = mysqli_stmt_execute($stmt);
+					}
+
+
+					echo "<br><br>Viviendas borradas: <br>";
+
+					foreach ($borrarV as $id) 
+					{
+						echo $id . "<br>";
+					}
+				}
+
+				else
+				{
+					echo "No se ha seleccionado ninguna vivienda";
+				}
+			}
+
+			mysqli_close($conectar);
+		}
+	}
+
+	else
+	{
+		echo "Los invitados no tienen acceso a esta pagina.";
+
+		echo "<br><br><a href='Viviendaszub.html'>Conectarse con un usuario</a>";
+	}
+}
+
+else
+{
+	echo "No se ha iniciado sesión.";
+	echo "<br><br><a href='Viviendaszub.html'>INICIAR SESION</a>";
+}
+?>
